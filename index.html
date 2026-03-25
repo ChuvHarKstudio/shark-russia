@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHARK RUSSIA MOBILE</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #010a13; font-family: sans-serif; }
+        #hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+        #joy-zone { position: absolute; left: 40px; bottom: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; pointer-events: auto; }
+        #joy-stick { position: absolute; left: 30px; top: 30px; width: 40px; height: 40px; background: #3498db; border-radius: 50%; }
+        #login { position: fixed; inset: 0; background: #090a0f; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: white; }
+        button { padding: 15px 30px; background: #3498db; color: white; border: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div id="login">
+    <h1>SHARK RUSSIA</h1>
+    <input type="text" id="nick" placeholder="Ваш ник" style="padding: 10px; margin-bottom: 10px;">
+    <button onclick="start()">ИГРАТЬ</button>
+</div>
+<div id="hud">
+    <div id="joy-zone"><div id="joy-stick"></div></div>
+</div>
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }</script>
+<script type="module">
+    import * as THREE from 'three';
+    let scene, camera, renderer, player, move = { x: 0, z: 0 };
+    function init() {
+        scene = new THREE.Scene(); scene.background = new THREE.Color(0x020b16);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer(); renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+        ground.rotation.x = -Math.PI/2; scene.add(ground);
+        player = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 1), new THREE.MeshStandardMaterial({ color: 0x3498db }));
+        player.position.y = 1; scene.add(player);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const joyZone = document.getElementById('joy-zone');
+        const joyStick = document.getElementById('joy-stick');
+        joyZone.addEventListener('touchmove', (e) => {
+            const t = e.touches[0]; const r = joyZone.getBoundingClientRect();
+            let dx = t.clientX - (r.left + 50); let dy = t.clientY - (r.top + 50);
+            const d = Math.min(Math.sqrt(dx*dx+dy*dy), 30); const a = Math.atan2(dy, dx);
+            joyStick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+            move.x = Math.cos(a)*(d/30); move.z = -Math.sin(a)*(d/30);
+        });
+        joyZone.addEventListener('touchend', () => { joyStick.style.transform = 'none'; move = {x:0, z:0}; });
+        animate();
+    }
+    function animate() {
+        requestAnimationFrame(animate);
+        if(move.z !== 0) player.translateZ(move.z * 0.2);
+        if(move.x !== 0) player.rotation.y -= move.x * 0.05;
+        camera.position.set(player.position.x, player.position.y + 5, player.position.z - 7);
+        camera.lookAt(player.position);
+        renderer.render(scene, camera);
+    }
+    window.start = () => { document.getElementById('login').style.display = 'none'; init(); };
+</script>
+</body>
+</html>
