@@ -3,131 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SHARK RUSSIA | REAL CITY</title>
+    <title>SHARK RUSSIA MOBILE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #010a13; font-family: 'Arial Black', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #020a16; font-family: sans-serif; }
         #ui { position: absolute; inset: 0; pointer-events: none; z-index: 10; padding: 20px; }
-        #money { color: #2ecc71; font-size: 28px; text-shadow: 2px 2px #000; }
-        #joy-bound { width: 140px; height: 140px; background: rgba(0,0,0,0.5); border: 4px solid #3498db; border-radius: 50%; position: absolute; left: 30px; bottom: 30px; pointer-events: auto; touch-action: none; }
-        #joy-stick { width: 60px; height: 60px; background: #3498db; border-radius: 50%; position: absolute; left: 40px; top: 40px; box-shadow: 0 0 15px #3498db; }
-        #start-screen { position: fixed; inset: 0; background: radial-gradient(circle, #1b2735 0%, #090a0f 100%); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
-        input { padding: 15px; border-radius: 5px; border: 2px solid #3498db; width: 250px; background: #000; color: #fff; font-size: 18px; margin: 10px; }
-        button { padding: 20px 60px; background: #3498db; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 22px; cursor: pointer; text-transform: uppercase; }
+        #money { color: #2ecc71; font-size: 24px; font-weight: bold; text-shadow: 2px 2px #000; }
+        #joy-zone { width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid #3498db; border-radius: 50%; position: absolute; left: 30px; bottom: 30px; pointer-events: auto; touch-action: none; }
+        #joy-stick { width: 50px; height: 50px; background: #3498db; border-radius: 50%; position: absolute; left: 35px; top: 35px; }
+        #start { position: fixed; inset: 0; background: #090a0f; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        button { padding: 20px 60px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 20px; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div id="start-screen">
-    <h1 style="font-size: 50px; margin-bottom: 5px;">SHARK<br><span style="color:#3498db">RUSSIA</span></h1>
-    <p style="color: #bdc3c7;">3D Mobile RolePlay</p>
-    <input type="text" id="nick" placeholder="Name_Surname">
-    <button onclick="startGame()">Войти в игру</button>
+<div id="start">
+    <h1 style="color:#3498db">SHARK RUSSIA</h1>
+    <p>Мобильный билд v1.0</p>
+    <button onclick="go()">ИГРАТЬ</button>
 </div>
 
 <div id="ui">
     <div id="money">$500,000</div>
-    <div id="joy-bound"><div id="joy-stick"></div></div>
+    <div id="joy-zone"><div id="joy-stick"></div></div>
 </div>
 
 <script>
-let scene, camera, renderer, player, joystick, stick, move = { x: 0, z: 0 };
+let scene, camera, renderer, player, move = { x: 0, z: 0 };
 
-function createBuilding(w, h, d, x, z, color, name) {
-    const geo = new THREE.BoxGeometry(w, h, d);
-    const mat = new THREE.MeshStandardMaterial({ color: color });
-    const b = new THREE.Mesh(geo, mat);
-    b.position.set(x, h/2, z);
-    scene.add(b);
-    
-    // Окна (светящиеся точки)
-    const winGeo = new THREE.PlaneGeometry(0.5, 0.5);
-    const winMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    for(let i=0; i<5; i++) {
-        const win = new THREE.Mesh(winGeo, winMat);
-        win.position.set(x + w/2 + 0.01, h - (i*2) - 1, z);
-        win.rotation.y = Math.PI/2;
-        scene.add(win);
-    }
+function addBox(w, h, d, x, z, col) {
+    const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshBasicMaterial({ color: col })
+    );
+    mesh.position.set(x, h/2, z);
+    scene.add(mesh);
 }
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020a16);
-    scene.fog = new THREE.Fog(0x020a16, 20, 120);
+    scene.background = new THREE.Color(0x05101a); // ТЕМНО-СИНЕЕ НЕБО
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: false }); // Для скорости на мобилках
+    renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Свет
-    scene.add(new THREE.AmbientLight(0x404040, 1.5));
-    const sun = new THREE.DirectionalLight(0x3498db, 1);
-    sun.position.set(50, 50, 50);
-    scene.add(sun);
-
-    // Дороги и карта
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+    // ЗЕМЛЯ (Асфальт)
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(1000, 1000),
+        new THREE.MeshBasicMaterial({ color: 0x111111 })
+    );
     ground.rotation.x = -Math.PI/2;
     scene.add(ground);
 
-    // Разметка дороги
-    const road = new THREE.GridHelper(400, 40, 0x333333, 0x333333);
+    // ДОРОГА (Разметка)
+    const road = new THREE.GridHelper(200, 20, 0x3498db, 0x222222);
     scene.add(road);
 
-    // ЗДАНИЯ ГОРОДА
-    createBuilding(10, 30, 10, 20, 20, 0x2c3e50, "Мэрия");
-    createBuilding(15, 10, 15, -25, 30, 0xc0392b, "Shark Казино"); // КАЗИНО
-    createBuilding(8, 20, 8, 15, -25, 0x27ae60, "Банк");
-    createBuilding(12, 15, 20, -30, -30, 0x2980b9, "Автосалон");
-    
-    // Игрок
-    player = new THREE.Group();
-    const pBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1), new THREE.MeshStandardMaterial({ color: 0x3498db }));
-    pBody.position.y = 1;
-    player.add(pBody);
+    // ГОРОД (Цветные здания - ТЕПЕРЬ ИХ ТОЧНО БУДЕТ ВИДНО)
+    addBox(10, 20, 10, 30, 30, 0xffffff); // Белая Мэрия
+    addBox(15, 12, 15, -40, 20, 0xff0000); // КРАСНОЕ КАЗИНО
+    addBox(8, 25, 8, 20, -40, 0x00ff00); // Зеленый Банк
+    addBox(12, 10, 20, -30, -30, 0x0000ff); // Синий Автосалон
+
+    // ИГРОК
+    player = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.5, 1),
+        new THREE.MeshBasicMaterial({ color: 0x3498db })
+    );
+    player.position.y = 1;
     scene.add(player);
 
-    // Управление
-    joystick = document.getElementById('joy-bound');
-    stick = document.getElementById('joy-stick');
-
-    const handleTouch = (e) => {
+    // УПРАВЛЕНИЕ
+    const jZone = document.getElementById('joy-zone');
+    const jStick = document.getElementById('joy-stick');
+    jZone.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
-        const r = joystick.getBoundingClientRect();
-        let dx = t.clientX - (r.left + 70);
-        let dy = t.clientY - (r.top + 70);
-        const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 50);
-        const angle = Math.atan2(dy, dx);
-        stick.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`;
-        move.x = Math.cos(angle) * (dist/50);
-        move.z = -Math.sin(angle) * (dist/50);
-    };
+        const r = jZone.getBoundingClientRect();
+        let dx = t.clientX - (r.left + 60);
+        let dy = t.clientY - (r.top + 60);
+        const d = Math.min(Math.sqrt(dx*dx+dy*dy), 40);
+        const a = Math.atan2(dy, dx);
+        jStick.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+        move.x = Math.cos(a)*(d/40); move.z = -Math.sin(a)*(d/40);
+    });
+    jZone.addEventListener('touchend', () => { jStick.style.transform = 'none'; move = {x:0,z:0}; });
 
-    joystick.addEventListener('touchmove', handleTouch);
-    joystick.addEventListener('touchend', () => { stick.style.transform = 'none'; move = {x:0, z:0}; });
-
-    animate();
+    loop();
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-    if(move.z !== 0) player.translateZ(move.z * 0.35);
+function loop() {
+    requestAnimationFrame(loop);
+    if(move.z !== 0) player.translateZ(move.z * 0.3);
     if(move.x !== 0) player.rotation.y -= move.x * 0.08;
     
-    // Камера за спиной
-    const camOffset = new THREE.Vector3(0, 6, -12).applyMatrix4(player.matrixWorld);
-    camera.position.lerp(camOffset, 0.1);
-    camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
-    
+    // КАМЕРА (За спиной)
+    camera.position.set(
+        player.position.x - Math.sin(player.rotation.y) * 10,
+        player.position.y + 6,
+        player.position.z - Math.cos(player.rotation.y) * 10
+    );
+    camera.lookAt(player.position);
     renderer.render(scene, camera);
 }
 
-function startGame() {
-    document.getElementById('start-screen').style.display = 'none';
-    init();
-}
+window.go = () => { document.getElementById('start').style.display = 'none'; init(); };
 </script>
 </body>
 </html>
